@@ -85,23 +85,32 @@ class Autoencoder(nn.Module):
         super(Autoencoder,self).__init__()
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(3, 3, kernel_size=3, stride=1, padding=1), # input_channels, output_channels, filter_size, stride
+            nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1), # input_channels, output_channels, filter_size, stride
             nn.ReLU(True),
-            nn.Conv2d(3, 32, kernel_size=2, stride=2, padding=0),
+            nn.Conv2d(16, 32, kernel_size=2, stride=2, padding=0),
             nn.ReLU(True), #inplace = True
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(True),
+            nn.Conv2d(64,128, kernel_size=2, stride=2, padding=0),
+            nn.ReLU(True),
+            nn.Conv2d(128,264, kernel_size=2, stride=2, padding=0),
             nn.ReLU(True),
         )
 
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(32, 32, kernel_size=3, stride=1, padding=1),
+            nn.ConvTranspose2d(264,128, kernel_size=2, stride=2, padding=0),
             nn.ReLU(True),
-            nn.ConvTranspose2d(32, 3, kernel_size=2, stride=2, padding=0),
+            nn.ConvTranspose2d(128,64, kernel_size=2, stride=2, padding=0),
             nn.ReLU(True),
-            nn.ConvTranspose2d(3, 1, kernel_size=3, stride=1, padding=1),
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(32, 16, kernel_size=2, stride=2, padding=0),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(16, 1, kernel_size=3, stride=1, padding=1),
             nn.Sigmoid(),
 
         )
+
 
     def forward(self,x):
         x=self.encoder(x) # x.shape = torch.Size([1, 5, 14, 14])
