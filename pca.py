@@ -108,3 +108,65 @@ from sklearn import metrics
 test_data = test_data.reshape(12560, -1)
 predicted = classifier.predict(test_data)
 print("Confusion matrix:\n%s" % metrics.confusion_matrix(test_labels, predicted))
+
+
+
+
+
+
+
+import pickle
+import numpy as np
+from PIL import Image
+import os
+import matplotlib.pyplot as plt
+from sklearn.utils import shuffle
+from sklearn import svm, linear_model, grid_search
+from sklearn.grid_search import GridSearchCV
+from sklearn.svm import LinearSVC
+
+fi = open('suchetha/numeric_bb.pkl','rb')
+f = pickle.load(fi)
+#print(len(f)) # 2
+#print(len(f[0]), len(f[1])) # 20 62800 => 20 days window, 62,800 labels
+#print(len(f[0][1], f[0][1][0])) # 4 62800 => 4 OHLC values, 62,800 samples
+fi.close()
+
+data=np.array(f[0])
+labels = np.array(f[1])
+# for p in range(len(labels)):
+#     if labels[p]=="buy":
+#         labels[p]=1
+#     else:
+#         labels[p]=-1
+
+print(len(data.T[labels=="buy"])) # 27550
+print(len(data.T[labels=="sell"])) # 35250
+
+data_buy = data.T[labels=="buy"].T
+labels_buy = labels[labels=="buy"]
+data_sell = data.T[labels=="sell"][0:27550].T
+labels_sell = labels[labels=="sell"][0:27550]
+#print(data_buy.shape, data_sell.shape, labels_buy.shape, labels_sell.shape)
+data=np.concatenate((data_buy.T, data_sell.T), axis=0)
+
+labels=np.concatenate((labels_buy, labels_sell))
+data, labels=shuffle(data, labels)
+data=data.T
+
+split_1 = int(0.8 * len(f[1])) #50240
+train_data = data[:,:,0:split_1]
+test_data = data[:,:,split_1:len(f[1])]
+train_labels = labels[0:split_1]
+test_labels = labels[split_1:len(f[1])]
+
+
+# print(len(train_data.T[train_labels=="buy"])) 
+# print(len(train_data.T[train_labels=="sell"])) 
+#print(train_data.shape, train_labels.shape)
+train_data = train_data.reshape(split_1, -1)
+print(train_data.shape)
+
+classifier = svm.SVC(C=0.001, gamma=0.001)
+classifier.fit(train_data, train_labels)
+
