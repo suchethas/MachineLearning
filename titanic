@@ -1,0 +1,104 @@
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib import style
+import re
+
+# data visualization
+import seaborn as sns
+
+
+train_df = pd.read_csv("h:/suchetha/titanic/train.csv")
+test_df = pd.read_csv("h:/suchetha/titanic/test.csv")
+train_df.info()
+
+
+train_df.describe()
+
+
+train_df.head(8)
+
+
+null_count = train_df.isnull().sum()
+percent = round((train_df.isnull().sum()/train_df.isnull().count())*100, 2)
+missing_data = pd.concat([null_count, percent], axis=1, keys=['null count', '%'])
+missing_data.sort_values('null count', ascending=False)
+
+# embarked has 2 missing values which can be filled, age has 177 missing values which is going to be tricky to fill, 
+# Cabin has 77% missing value, would be better to remove
+
+
+train_df.columns.values
+
+
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
+women = train_df[train_df['Sex']=='female']
+men = train_df[train_df['Sex']=='male']
+ax = sns.distplot(women[women['Survived']==1].Age.dropna(), bins=18, label = 'survived', ax = axes[0], kde =False)
+ax = sns.distplot(women[women['Survived']==0].Age.dropna(), bins=40, label = 'not survived', ax = axes[0], kde =False)
+ax.legend()
+ax.set_title('Female')
+ax = sns.distplot(men[men['Survived']==1].Age.dropna(), bins=40, label='survived', kde=False, ax = axes[1])
+ax = sns.distplot(men[men['Survived']==0].Age.dropna(), bins=40, label='not survived', kde=False, ax=axes[1])
+ax.legend()
+ax.set_title("Male")
+plt.show()
+
+
+
+# what was the mean fare of people who survived and people did not survive
+sns.barplot(x='Survived', y='Fare', data=train_df)
+plt.show()
+
+
+
+# Starting alphabet of the cabin no. indicates deck.  Create a new feature Deck and fill the Null values with 0 and delete cabin
+deck = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7, "U": 8}
+data = [train_df, test_df]
+for d in data:
+    d['Cabin'] = d['Cabin'].fillna("U0")
+    d['Deck'] = d['Cabin'].map(lambda x: re.compile("([a-zA-Z]+)").search(x).group())
+    d['Deck'] = d['Deck'].map(deck)
+    d['Deck'] = d['Deck'].fillna(0)
+    d['Deck'] = d['Deck'].astype(int)
+
+# we can now drop the cabin feature
+train_df = train_df.drop(['Cabin'], axis=1)
+test_df = test_df.drop(['Cabin'], axis=1)
+# print(train_df['Deck'].isnull().sum())
+
+
+
+for d in data:
+    age_mean = d['Age'].mean()
+    age_std = d['Age'].std()
+    age_null = d['Age'].isnull().sum()
+    rand_age = np.random.randint(age_mean - age_std, age_mean + age_std, size = age_null)
+    age_slice = d["Age"].copy()
+    age_slice[np.isnan(age_slice)] = rand_age
+    d["Age"] = age_slice
+    d["Age"] = train_df["Age"].astype(int)
+    print(d['Age'].isnull().sum())
+    
+    
+    
+    
+# fill the missing embarked column with the most commonly used value
+# train_df['Embarked'].mode()
+train_df['Embarked'].value_counts().argmax()
+for d in data:
+    d['Embarked'] = d['Embarked'].fillna('S')
+print(train_df['Embarked'].isnull().sum())
+
+
+
+sex = {"male":0, "female":2}
+ports = {"S": 0, "C": 1, "Q": 2}
+for d in data:
+    d['Fare'] = d['Fare'].fillna(0)
+    d['Fare'] = d['Fare'].astype(int)
+    d['Sex'] = d['Sex'].map(sex)
+    d['Embarked'] = d['Embarked'].map(ports)
+    
+train_df = train_df.drop(['Ticket'], axis=1)
+test_df = test_df.drop(['Ticket'], axis=1)
