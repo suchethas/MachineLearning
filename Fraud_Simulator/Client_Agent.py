@@ -8,10 +8,6 @@ def random_country(fname):
 	lines = open(fname).read().splitlines()
 	return random.choice(lines)
 
-# def custom_data_collector(model):
-#     agent_wealths = [agent.wealth for agent in model.schedule.agents]
-#     print(agent_wealths)
-
 class ClientAgent(Agent):
 	def __init__(self, unique_id, model):
 		# create a client with id, random units of money, random country
